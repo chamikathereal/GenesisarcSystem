@@ -28,6 +28,8 @@ public class Login extends javax.swing.JFrame {
         UserType();
     }
     
+    //LOGIN PAGE
+    
     private void UserType(){
          try {
 
