@@ -1083,21 +1083,21 @@ if (ID.isEmpty()) {
             // Check if the record exists in `providing` by product_id
             ResultSet resultSet = MYSQL.execute("SELECT * FROM `providing` WHERE stock_id = '" + StockID + "'");
 
-            if (resultSet.next()) {
-                // Update stock by product_id
-                String updateQuery = "UPDATE stock SET qty = qty + " + qty + " WHERE product_id = '" + productID + "'";
-                MYSQL.execute(updateQuery);  // Execute the update query
-
-                // Delete from `providing` by product_id
-                String deleteQuery = "DELETE FROM `providing` WHERE product_id = '" + productID + "'";
-                MYSQL.execute(deleteQuery);  // Execute the delete query
-
-                // Show a success message
-                JOptionPane.showMessageDialog(this, "Stock updated and record deleted successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
-            } else {
-                // Notify user if the record was not found
-                JOptionPane.showMessageDialog(this, "Record not found", "Warning", JOptionPane.WARNING_MESSAGE);
-            }
+//            if (resultSet.next()) {
+//                // Update stock by product_id
+//                String updateQuery = "UPDATE stock SET qty = qty + " + qty + " WHERE product_id = '" + productID + "'";
+//                MYSQL.execute(updateQuery);  // Execute the update query
+//
+//                // Delete from `providing` by product_id
+//                String deleteQuery = "DELETE FROM `providing` WHERE product_id = '" + productID + "'";
+//                MYSQL.execute(deleteQuery);  // Execute the delete query
+//
+//                // Show a success message
+//                JOptionPane.showMessageDialog(this, "Stock updated and record deleted successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+//            } else {
+//                // Notify user if the record was not found
+//                JOptionPane.showMessageDialog(this, "Record not found", "Warning", JOptionPane.WARNING_MESSAGE);
+//            }
 
             // Reload records after updating and deleting
             loadRecord();

@@ -18,45 +18,50 @@ import lk.genesisarcsystem.connection.MYSQL;
  * @author Asiri
  */
 public class SupplierManagement extends javax.swing.JFrame {
-    
-    //private String companyId;
-    
+
+    //dev by chamika gayashan
+    private GRN grn;
+
+    public void setGrn(GRN grn) {
+        this.grn = grn;
+    }
+
     public SupplierManagement() {
         initComponents();
         loardSuppliers();
         loadCompany();
         loadcity();
     }
-    
-      private void loardSuppliers() {
-            try {
-             // Perform JOIN query to get supplier details along with company name
-             ResultSet resultSet = MYSQL.execute("SELECT supplier.id, supplier.f_name, supplier.l_name, supplier.mobile, company.name AS company_name "
-                                                 + "FROM supplier "
-                                                 + "INNER JOIN company ON supplier.company_id = company.id");
 
-             // Get the table model and reset its row count to 0 (clear table)
-             DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
-             model.setRowCount(0);
+    private void loardSuppliers() {
+        try {
+            // Perform JOIN query to get supplier details along with company name
+            ResultSet resultSet = MYSQL.execute("SELECT supplier.id, supplier.f_name, supplier.l_name, supplier.mobile, company.name AS company_name "
+                    + "FROM supplier "
+                    + "INNER JOIN company ON supplier.company_id = company.id");
 
-             // Loop through the result set and populate the table with supplier and company data
-             while (resultSet.next()) {
-                 Vector<String> vector = new Vector<>();
-                 vector.add(resultSet.getString("id"));  // Supplier ID
-                 vector.add(resultSet.getString("f_name"));  // First Name
-                 vector.add(resultSet.getString("l_name"));  // Last Name
-                 vector.add(resultSet.getString("mobile"));  // Mobile Number
-                 vector.add(resultSet.getString("company_name"));  // Company Name
-                 model.addRow(vector);  // Add row to the table model
-             }
+            // Get the table model and reset its row count to 0 (clear table)
+            DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+            model.setRowCount(0);
 
-         } catch (Exception e) {
-             e.printStackTrace();
-         }
+            // Loop through the result set and populate the table with supplier and company data
+            while (resultSet.next()) {
+                Vector<String> vector = new Vector<>();
+                vector.add(resultSet.getString("id"));  // Supplier ID
+                vector.add(resultSet.getString("f_name"));  // First Name
+                vector.add(resultSet.getString("l_name"));  // Last Name
+                vector.add(resultSet.getString("mobile"));  // Mobile Number
+                vector.add(resultSet.getString("company_name"));  // Company Name
+                model.addRow(vector);  // Add row to the table model
+            }
 
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
     }
-      public void loadcity() {
+
+    public void loadcity() {
 
         try {
 
@@ -83,8 +88,8 @@ public class SupplierManagement extends javax.swing.JFrame {
 
         }
     }
-      
-     public void loadCompany() {
+
+    public void loadCompany() {
 
         try {
 
@@ -419,6 +424,11 @@ public class SupplierManagement extends javax.swing.JFrame {
                 "ID", "First Name", "Last Name", "Mobile", "Company"
             }
         ));
+        jTable1.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jTable1MouseClicked(evt);
+            }
+        });
         jScrollPane1.setViewportView(jTable1);
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
@@ -508,7 +518,7 @@ public class SupplierManagement extends javax.swing.JFrame {
             String[] parts = companyData.split(" - ");  // Assuming 'companyID - companyName' format
             if (parts.length > 0) {
                 selectedcompanyID = parts[0];  // First part is the company ID
-                
+
             }
         } else {
             System.out.println("No valid company selected.");
@@ -522,7 +532,7 @@ public class SupplierManagement extends javax.swing.JFrame {
             String[] parts = cityData.split(" - ");  // Assuming 'cityID - cityName' format
             if (parts.length > 0) {
                 selectedcityID = parts[0];  // First part is the city ID
-               
+
             }
         } else {
             System.out.println("No valid city selected.");
@@ -561,13 +571,13 @@ public class SupplierManagement extends javax.swing.JFrame {
                     MYSQL.execute("INSERT INTO `supplier` (`f_name`, `l_name`, `mobile`, `company_id`, `supp_address_id`) VALUES ('" + fn + "', '" + ln + "', '" + mb + "', '" + selectedcompanyID + "', LAST_INSERT_ID())");
                     JOptionPane.showMessageDialog(this, "Supplier added successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
                 }
-                
+
                 loardSuppliers();
-                
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
-}
+        }
 
 
     }//GEN-LAST:event_jButton5ActionPerformed
@@ -594,7 +604,7 @@ public class SupplierManagement extends javax.swing.JFrame {
     }//GEN-LAST:event_jComboBox1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-       this.dispose();
+        this.dispose();
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
@@ -607,6 +617,19 @@ public class SupplierManagement extends javax.swing.JFrame {
         AddCity addcity = new AddCity();
         addcity.setVisible(true);
     }//GEN-LAST:event_jButton4ActionPerformed
+
+    private void jTable1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTable1MouseClicked
+        //dev by chamika gayashan
+         int row = jTable1.getSelectedRow();
+        
+        if (evt.getClickCount() == 2) {
+            if (grn != null) {
+                grn.getjLabel18().setText(String.valueOf(jTable1.getValueAt(row, 3)));
+                grn.getjTextField7().setText(String.valueOf(jTable1.getValueAt(row, 1)) + " " + String.valueOf(jTable1.getValueAt(row, 2)));
+                this.dispose();
+            }
+        } 
+    }//GEN-LAST:event_jTable1MouseClicked
 
     /**
      * @param args the command line arguments
