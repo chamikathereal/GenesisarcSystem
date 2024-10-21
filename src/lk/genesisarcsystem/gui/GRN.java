@@ -15,6 +15,7 @@ import lk.genesisarcsystem.model.GRNItem;
 
 public class GRN extends javax.swing.JFrame {
 //this is a hashmap
+    //GEETH
     HashMap<String, GRNItem> grnItemMap = new HashMap<>();
 
     public GRN() {
