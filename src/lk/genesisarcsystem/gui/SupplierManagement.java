@@ -19,7 +19,7 @@ import lk.genesisarcsystem.connection.MYSQL;
  */
 public class SupplierManagement extends javax.swing.JFrame {
 
-    //dev by chamika gayashan
+    //dev by chamika.
     private GRN grn;
 
     public void setGrn(GRN grn) {
