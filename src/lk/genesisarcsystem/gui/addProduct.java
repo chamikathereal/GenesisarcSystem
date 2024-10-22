@@ -1,6 +1,7 @@
 package lk.genesisarcsystem.gui;
 
 import com.formdev.flatlaf.FlatDarkLaf;
+import java.awt.event.ItemEvent;
 import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.Vector;
@@ -20,7 +21,7 @@ public class addProduct extends javax.swing.JFrame {
     public addProduct() {
         initComponents();
         loadCategory();
-        loadRank();
+       
         loadProduct();
         //this.setExtendedState(JFrame.MAXIMIZED_BOTH);
     }
@@ -31,7 +32,7 @@ public class addProduct extends javax.swing.JFrame {
             ResultSet resultSet = MYSQL.execute(
                     "SELECT * FROM `product` "
                     + "INNER JOIN `category` ON `product`.`category_id` = `category`.`id` "
-                    + "INNER JOIN `rank` ON `product`.`rank_id` = `rank`.`id` "
+                    + "INNER JOIN `brand` ON `product`.`brand_id` = `brand`.`id` "
                     + "ORDER BY `product`.`id` ASC"
             );
 
@@ -43,7 +44,7 @@ public class addProduct extends javax.swing.JFrame {
                 vector.add(resultSet.getString("product.id"));
                 vector.add(resultSet.getString("product.name"));
                 vector.add(resultSet.getString("category.name"));
-                vector.add(resultSet.getString("rank.name"));
+                vector.add(resultSet.getString("brand.name"));
                 model.addRow(vector);
             }
 
@@ -80,20 +81,20 @@ public class addProduct extends javax.swing.JFrame {
 
     }
 
-    private HashMap<String, String> rankMap = new HashMap<>();
+    private HashMap<String, String> brandMap = new HashMap<>();
 
-    private void loadRank() {
+    private void loadBrand(String query) {
 
         try {
 
-            ResultSet resultSet = MYSQL.execute("SELECT * FROM `rank`");
+            ResultSet resultSet = MYSQL.execute(query);
 
             Vector v = new Vector();
             v.add("Select");
 
             while (resultSet.next()) {
                 v.add(resultSet.getString("name"));
-                rankMap.put(resultSet.getString("name"), resultSet.getString("id"));
+                brandMap.put(resultSet.getString("name"), resultSet.getString("id"));
             }
 
             DefaultComboBoxModel model = (DefaultComboBoxModel) jComboBox2.getModel();
@@ -154,6 +155,16 @@ public class addProduct extends javax.swing.JFrame {
         jComboBox1.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         jComboBox1.setForeground(new java.awt.Color(255, 255, 255));
         jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        jComboBox1.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                jComboBox1ItemStateChanged(evt);
+            }
+        });
+        jComboBox1.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jComboBox1MouseClicked(evt);
+            }
+        });
 
         jLabel1.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         jLabel1.setText("Select Category:");
@@ -175,7 +186,7 @@ public class addProduct extends javax.swing.JFrame {
         });
 
         jLabel4.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        jLabel4.setText("Select Rank:");
+        jLabel4.setText("Select Brand:");
 
         jComboBox2.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         jComboBox2.setForeground(new java.awt.Color(255, 255, 255));
@@ -384,14 +395,14 @@ public class addProduct extends javax.swing.JFrame {
         // TODO add your handling code here:
         String productName = jTextField1.getText();
         String selectedCategory = jComboBox1.getSelectedItem().toString();
-        String selectedRank = jComboBox2.getSelectedItem().toString();
+        String selectedBrand = jComboBox2.getSelectedItem().toString();
 
         if (productName.isBlank()) {
             JOptionPane.showMessageDialog(this, "Please enter the product name", "Warning", JOptionPane.WARNING_MESSAGE);
         } else if (selectedCategory.equals("Select")) {
             JOptionPane.showMessageDialog(this, "Please select a category", "Warning", JOptionPane.WARNING_MESSAGE);
-        } else if (selectedRank.equals("Select")) {
-            JOptionPane.showMessageDialog(this, "Please select a rank", "Warning", JOptionPane.WARNING_MESSAGE);
+        } else if (selectedBrand.equals("Select")) {
+            JOptionPane.showMessageDialog(this, "Please select a brand", "Warning", JOptionPane.WARNING_MESSAGE);
         } else {
             try {
                 // Check if product already exists in the database
@@ -401,19 +412,19 @@ public class addProduct extends javax.swing.JFrame {
                     JOptionPane.showMessageDialog(this, "Product already added", "Warning", JOptionPane.WARNING_MESSAGE);
                 } else {
                     // Insert new product into the database
-                    String categoryId = categoryMap.get(selectedCategory); // Get the corresponding category ID
-                    String rankId = rankMap.get(selectedRank); // Get the corresponding rank ID
+                    String categoryId = categoryMap.get(selectedCategory); 
+                    String brandId = brandMap.get(selectedBrand); 
 
-                    MYSQL.execute("INSERT INTO `product`(`name`, `category_id`, `rank_id`) VALUES('"
-                            + productName + "', '" + categoryId + "', '" + rankId + "')");
-
-                    JOptionPane.showMessageDialog(this, "Product added successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    MYSQL.execute("INSERT INTO `product`(`name`, `category_id`, `brand_id`) VALUES('"
+                            + productName + "', '" + categoryId + "', '" + brandId + "')");
 
                     // Reload Product
                     loadProduct();
+                    
+                    JOptionPane.showMessageDialog(this, "Product added successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
 
                     // Reset the form fields
-                    //resetFields();
+                    resetFields();
                 }
 
             } catch (Exception e) {
@@ -431,7 +442,6 @@ public class addProduct extends javax.swing.JFrame {
             jButton1.setEnabled(false);
 
             if (selectedRow != -1) {
-                // Assuming jTable1 columns are: ID, Product Name, Category Name, Rank Name
 
                 // Get Product Name
                 String productName = jTable1.getValueAt(selectedRow, 1).toString();
@@ -441,9 +451,9 @@ public class addProduct extends javax.swing.JFrame {
                 String categoryName = jTable1.getValueAt(selectedRow, 2).toString();
                 jComboBox1.setSelectedItem(categoryName); // ComboBox for Category Name
 
-                // Get Rank Name and set it in jComboBox2
-                String rankName = jTable1.getValueAt(selectedRow, 3).toString();
-                jComboBox2.setSelectedItem(rankName); // ComboBox for Rank Name
+                // Get brand Name and set it in jComboBox2
+                String brandName = jTable1.getValueAt(selectedRow, 3).toString();
+                jComboBox2.setSelectedItem(brandName); 
             }
         }
 
@@ -470,21 +480,21 @@ public class addProduct extends javax.swing.JFrame {
             // Get the updated values from the text fields and combo boxes
             String productName = jTextField1.getText();
             String selectedCategory = jComboBox1.getSelectedItem().toString();
-            String selectedRank = jComboBox2.getSelectedItem().toString();
+            String selectedBrand = jComboBox2.getSelectedItem().toString();
 
             // Check if the fields are filled correctly
             if (productName.isBlank()) {
                 JOptionPane.showMessageDialog(this, "Please enter the product name", "Warning", JOptionPane.WARNING_MESSAGE);
             } else if (selectedCategory.equals("Select")) {
                 JOptionPane.showMessageDialog(this, "Please select a category", "Warning", JOptionPane.WARNING_MESSAGE);
-            } else if (selectedRank.equals("Select")) {
-                JOptionPane.showMessageDialog(this, "Please select a rank", "Warning", JOptionPane.WARNING_MESSAGE);
+            } else if (selectedBrand.equals("Select")) {
+                JOptionPane.showMessageDialog(this, "Please select a brand", "Warning", JOptionPane.WARNING_MESSAGE);
             } else {
                 // Update the product in the database
                 try {
                     MYSQL.execute("UPDATE `product` SET `name` = '" + productName + "', "
                             + "`category_id` = '" + categoryMap.get(selectedCategory) + "', "
-                            + "`rank_id` = '" + rankMap.get(selectedRank) + "' "
+                            + "`brand_id` = '" + brandMap.get(selectedBrand) + "' "
                             + "WHERE `id` = '" + productId + "'");
 
                     JOptionPane.showMessageDialog(this, "Product updated successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
@@ -509,6 +519,22 @@ public class addProduct extends javax.swing.JFrame {
         // TODO add your handling code here:
         resetFields();
     }//GEN-LAST:event_jButton3ActionPerformed
+
+    private void jComboBox1ItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_jComboBox1ItemStateChanged
+        // TODO add your handling code here:
+        if (evt.getStateChange() == ItemEvent.SELECTED) {
+            // Only handle the event when an item is selected
+            String getCategory = jComboBox1.getSelectedItem().toString();
+            System.out.println(jComboBox1.getSelectedItem());
+            loadBrand("SELECT * FROM `brand` "
+                    + "INNER JOIN `category` ON `brand`.`category_id` = `category`.`id`"
+                    + "WHERE `category`.`name` = '" + getCategory + "'");
+        }
+    }//GEN-LAST:event_jComboBox1ItemStateChanged
+
+    private void jComboBox1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jComboBox1MouseClicked
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jComboBox1MouseClicked
 
     /**
      * @param args the command line arguments
