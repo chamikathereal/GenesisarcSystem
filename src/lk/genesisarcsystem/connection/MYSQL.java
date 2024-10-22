@@ -9,7 +9,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
-/**
+/*
  *
  * @author Asiri
  */
@@ -19,7 +19,7 @@ public class MYSQL {
     static {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/genesisarcgroup", "root", "Ceegthereal@2003");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/genesisarcgroup", "root", "ruwanGEETH@2003");
 
         } catch (Exception e) {
             e.printStackTrace();

@@ -9,11 +9,14 @@ import com.formdev.flatlaf.ui.FlatListCellBorder;
 import com.mysql.cj.protocol.x.ReusableOutputStream;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.util.Date;
 import java.util.Random;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import static javax.servlet.jsp.tagext.TagAttributeInfo.ID;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -32,11 +35,57 @@ public class Areca_nuts_out extends javax.swing.JFrame {
     public Areca_nuts_out() {
         initComponents();
         generateID();
-        //loadBrandsForCategory(categoryID);
+        loadRecord3();
         loadRecord(); 
         loadCategories();
         loadRecord1(); 
+        generatepayID();
        
+    }
+    
+    
+    private void payAmmount(){
+            try {
+    // Get input dates from text fields
+    String p_date_str = jTextField5.getText();
+    String o_date_str = jTextField6.getText(); // End date
+
+    // Parse input strings to java.sql.Date
+    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); // Adjust format as needed
+    java.sql.Date p_date = null;
+    java.sql.Date o_date = null;
+
+    try {
+        p_date = new java.sql.Date(dateFormat.parse(p_date_str).getTime());
+        o_date = new java.sql.Date(dateFormat.parse(o_date_str).getTime());
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, "Invalid date format. Please use yyyy-MM-dd.", "Date Format Error", JOptionPane.ERROR_MESSAGE);
+        return; // Exit the method on invalid date format
+    }
+
+    // Query to retrieve total quantity from the providing table within the specified date range
+    ResultSet resultSet = MYSQL.execute("SELECT SUM(quantity) AS total_qty , SUM(price) AS total_price FROM providing WHERE date BETWEEN '" + p_date + "' AND '" + o_date + "'");
+    
+
+    // Check if resultSet has rows before accessing
+    if (resultSet.next()) {
+        double price = resultSet.getDouble("total_price");
+        String totalPrice = String.valueOf(price);
+        int totalQty = resultSet.getInt("total_qty");
+        String totlqty = String.valueOf(totalQty);
+        // Display the total quantity
+        
+        JOptionPane.showMessageDialog(this, "Total Price: " + totalPrice, "Total Price", JOptionPane.INFORMATION_MESSAGE);
+        jTextField7.setText(totlqty);
+        jLabel17.setText(String.valueOf(totalPrice));
+
+    } else {
+        System.out.println("No data found for the specified date range.");
+        JOptionPane.showMessageDialog(this, "No data found for the specified date range.", "No Data", JOptionPane.WARNING_MESSAGE);
+    }
+} catch (Exception e) {
+    e.printStackTrace(); // Print the exception for debugging
+}
     }
     
 private void getSelectedRowData() {
@@ -78,10 +127,44 @@ private void getSelectedRowData1() {
         JOptionPane.showMessageDialog(this, "Invalid row selection.", "Error", JOptionPane.ERROR_MESSAGE);
     }
 }
+private void getSelectedRowData2() {
+    // Ensure a row is selected before proceeding
+    int selectedRow = jTable3.getSelectedRow();
+    if (selectedRow == -1) {
+        JOptionPane.showMessageDialog(this, "Please select a row from the table.", "No Selection", JOptionPane.WARNING_MESSAGE);
+        return;
+    }
 
-
-
+    // Ensure the selected row index is valid within the table model bounds
+    if (selectedRow >= 0 && selectedRow < jTable3.getRowCount()) {
+        // Retrieve data from the selected row (ID from column 0)
+        String id = jTable3.getValueAt(selectedRow, 0).toString(); 
         
+        // Set the ID to the respective text field
+        jTextField4.setText(id);
+    } else {
+        JOptionPane.showMessageDialog(this, "Invalid row selection.", "Error", JOptionPane.ERROR_MESSAGE);
+    }
+}
+private void generatepayID() {
+            long id = System.currentTimeMillis();  // Get current time in milliseconds
+            String idStr = String.valueOf(id);     // Convert to String
+            String numericPart = idStr.substring(idStr.length() - 3);  // Get the last 3 characters of the ID
+
+            // Generate 3 random uppercase letters
+            Random random = new Random();
+            StringBuilder letterPart = new StringBuilder(3);
+            for (int i = 0; i < 6; i++) {
+                char randomLetter = (char) ('A' + random.nextInt(26));  // Random letter between A-Z
+                letterPart.append(randomLetter);
+            }
+
+            // Combine numeric and letter parts
+            String invoiceNumber = letterPart.toString() + numericPart;
+
+            jTextField4.setText(invoiceNumber);  // Set the value to the text field
+        }
+    
         private void generateID() {
             long id = System.currentTimeMillis();  // Get current time in milliseconds
             String idStr = String.valueOf(id);     // Convert to String
@@ -278,6 +361,41 @@ public void loadStockForBrandAndCategory(String categoryID, String brandID) {
     }
 }
 
+    private void loadRecord3() {
+    try {
+        // Query to fetch all records from `payfor_areca`
+        String query = "SELECT * FROM `payfor_areca`";
+
+        ResultSet resultSet = MYSQL.execute(query);
+
+        // Get the model of the table and clear existing rows
+        DefaultTableModel model = (DefaultTableModel) jTable3.getModel();
+        model.setRowCount(0);  // Clear the table to prevent duplicate entries
+
+        // Loop through the ResultSet and populate the table
+        while (resultSet.next()) {
+            Vector<String> vector = new Vector<>();
+            vector.add(resultSet.getString("id"));         // Payfor_areca record ID
+            vector.add(resultSet.getString("p_date"));     // Payment date
+            vector.add(resultSet.getString("o_date"));     // Order date
+            vector.add(resultSet.getString("totqty"));     // Total quantity
+            vector.add(resultSet.getString("ammount"));    // Amount
+
+            // Add the row to the table model
+            model.addRow(vector);
+        }
+
+    } catch (SQLException e) {
+        // Catch and print SQL exceptions
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "SQL error occurred: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+    } catch (Exception e) {
+        // Catch any other exceptions
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "An error occurred: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+    }
+}
+
      
       
      
@@ -285,7 +403,6 @@ public void loadStockForBrandAndCategory(String categoryID, String brandID) {
         jTextField1.setText("");
         jTextField2.setText("");
         jTextField3.setText("");
-        jLabel16.setText("");
         jComboBox1.setSelectedIndex(0);
         jComboBox2.setSelectedIndex(-1);
         jSpinner1.setValue(0);
@@ -350,23 +467,29 @@ public void loadStockForBrandAndCategory(String categoryID, String brandID) {
         jLabel12 = new javax.swing.JLabel();
         jTextField4 = new javax.swing.JTextField();
         jLabel13 = new javax.swing.JLabel();
-        jDateChooser1 = new com.toedter.calendar.JDateChooser();
         jLabel14 = new javax.swing.JLabel();
-        jDateChooser2 = new com.toedter.calendar.JDateChooser();
         jLabel15 = new javax.swing.JLabel();
-        jSpinner3 = new javax.swing.JSpinner();
-        jLabel16 = new javax.swing.JLabel();
         jLabel17 = new javax.swing.JLabel();
         jButton8 = new javax.swing.JButton();
         jButton9 = new javax.swing.JButton();
         jButton10 = new javax.swing.JButton();
+        jTextField5 = new javax.swing.JTextField();
+        jTextField6 = new javax.swing.JTextField();
+        jTextField7 = new javax.swing.JTextField();
+        jLabel19 = new javax.swing.JLabel();
         jPanel12 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
         jTable3 = new javax.swing.JTable();
         jButton7 = new javax.swing.JButton();
+        jButton5 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setResizable(false);
+        addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                formMouseClicked(evt);
+            }
+        });
 
         jPanel1.setBackground(new java.awt.Color(51, 51, 51));
 
@@ -706,22 +829,23 @@ public void loadStockForBrandAndCategory(String categoryID, String brandID) {
         jLabel15.setFont(new java.awt.Font("Serif", 1, 16)); // NOI18N
         jLabel15.setText("Quantity");
 
-        jLabel16.setFont(new java.awt.Font("Serif", 1, 20)); // NOI18N
-        jLabel16.setText("Total Price :");
-
         jLabel17.setFont(new java.awt.Font("Serif", 1, 20)); // NOI18N
         jLabel17.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel17.setText("200000");
 
         jButton8.setBackground(new java.awt.Color(255, 51, 51));
         jButton8.setFont(new java.awt.Font("Serif", 1, 14)); // NOI18N
         jButton8.setForeground(new java.awt.Color(255, 255, 255));
         jButton8.setText("Delete");
+        jButton8.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton8ActionPerformed(evt);
+            }
+        });
 
         jButton9.setBackground(new java.awt.Color(102, 102, 255));
         jButton9.setFont(new java.awt.Font("Serif", 1, 14)); // NOI18N
         jButton9.setForeground(new java.awt.Color(255, 255, 255));
-        jButton9.setText("Update");
+        jButton9.setText("Save");
         jButton9.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton9ActionPerformed(evt);
@@ -731,7 +855,15 @@ public void loadStockForBrandAndCategory(String categoryID, String brandID) {
         jButton10.setBackground(new java.awt.Color(0, 204, 255));
         jButton10.setFont(new java.awt.Font("Serif", 1, 14)); // NOI18N
         jButton10.setForeground(new java.awt.Color(255, 255, 255));
-        jButton10.setText("Save");
+        jButton10.setText("Proccess");
+        jButton10.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton10ActionPerformed(evt);
+            }
+        });
+
+        jLabel19.setFont(new java.awt.Font("Serif", 1, 20)); // NOI18N
+        jLabel19.setText("Ammount :");
 
         javax.swing.GroupLayout jPanel11Layout = new javax.swing.GroupLayout(jPanel11);
         jPanel11.setLayout(jPanel11Layout);
@@ -739,27 +871,24 @@ public void loadStockForBrandAndCategory(String categoryID, String brandID) {
             jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jLabel11, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(jPanel11Layout.createSequentialGroup()
-                .addContainerGap(19, Short.MAX_VALUE)
+                .addContainerGap(26, Short.MAX_VALUE)
                 .addGroup(jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jButton8, javax.swing.GroupLayout.PREFERRED_SIZE, 192, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                         .addComponent(jButton9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jButton10, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel11Layout.createSequentialGroup()
-                            .addGap(1, 1, 1)
-                            .addGroup(jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                .addComponent(jLabel15, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(jSpinner3, javax.swing.GroupLayout.PREFERRED_SIZE, 191, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(jDateChooser2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(jLabel14, javax.swing.GroupLayout.PREFERRED_SIZE, 191, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(jDateChooser1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(jTextField4)
-                                .addComponent(jLabel12, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(jLabel13, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addGroup(jPanel11Layout.createSequentialGroup()
-                                    .addComponent(jLabel16)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(jLabel17, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE))))))
+                        .addComponent(jLabel15, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jTextField4, javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(jLabel12, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabel13, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jTextField5)
+                        .addComponent(jLabel14, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 191, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jTextField6, javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(jButton8, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jTextField7, javax.swing.GroupLayout.Alignment.LEADING))
+                    .addGroup(jPanel11Layout.createSequentialGroup()
+                        .addComponent(jLabel19)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jLabel17, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(23, Short.MAX_VALUE))
         );
         jPanel11Layout.setVerticalGroup(
@@ -774,39 +903,50 @@ public void loadStockForBrandAndCategory(String categoryID, String brandID) {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel13)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jDateChooser1, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jTextField5, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(7, 7, 7)
                 .addComponent(jLabel14)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jDateChooser2, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jTextField6, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(7, 7, 7)
                 .addComponent(jLabel15)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSpinner3, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jTextField7, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addGroup(jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel19, javax.swing.GroupLayout.DEFAULT_SIZE, 42, Short.MAX_VALUE)
+                    .addComponent(jLabel17, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel16)
-                    .addComponent(jLabel17))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jButton10, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButton9, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButton8, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(58, Short.MAX_VALUE))
         );
 
         jTable3.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null, null},
-                {null, null, null, null, null},
-                {null, null, null, null, null},
-                {null, null, null, null, null}
+
             },
             new String [] {
                 "ID", "P-Date", "O-Date", "Total Quantity", "Total Price"
             }
         ));
+        jTable3.addAncestorListener(new javax.swing.event.AncestorListener() {
+            public void ancestorAdded(javax.swing.event.AncestorEvent evt) {
+                jTable3AncestorAdded(evt);
+            }
+            public void ancestorMoved(javax.swing.event.AncestorEvent evt) {
+            }
+            public void ancestorRemoved(javax.swing.event.AncestorEvent evt) {
+            }
+        });
+        jTable3.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jTable3MouseClicked(evt);
+            }
+        });
         jScrollPane3.setViewportView(jTable3);
 
         javax.swing.GroupLayout jPanel12Layout = new javax.swing.GroupLayout(jPanel12);
@@ -814,16 +954,16 @@ public void loadStockForBrandAndCategory(String categoryID, String brandID) {
         jPanel12Layout.setHorizontalGroup(
             jPanel12Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel12Layout.createSequentialGroup()
-                .addGap(93, 93, 93)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 552, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(81, Short.MAX_VALUE))
+                .addContainerGap()
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 707, Short.MAX_VALUE)
+                .addContainerGap())
         );
         jPanel12Layout.setVerticalGroup(
             jPanel12Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel12Layout.createSequentialGroup()
-                .addGap(39, 39, 39)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(72, Short.MAX_VALUE))
+                .addContainerGap()
+                .addComponent(jScrollPane3)
+                .addContainerGap())
         );
 
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
@@ -878,6 +1018,11 @@ public void loadStockForBrandAndCategory(String categoryID, String brandID) {
             }
         });
 
+        jButton5.setBackground(new java.awt.Color(0, 153, 204));
+        jButton5.setFont(new java.awt.Font("Serif", 1, 14)); // NOI18N
+        jButton5.setForeground(new java.awt.Color(255, 255, 255));
+        jButton5.setText("Print");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -888,6 +1033,8 @@ public void loadStockForBrandAndCategory(String categoryID, String brandID) {
                 .addContainerGap())
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jButton5)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButton7, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(14, 14, 14))
         );
@@ -896,7 +1043,9 @@ public void loadStockForBrandAndCategory(String categoryID, String brandID) {
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 558, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jButton7, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jButton7, javax.swing.GroupLayout.DEFAULT_SIZE, 30, Short.MAX_VALUE)
+                    .addComponent(jButton5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -908,8 +1057,57 @@ public void loadStockForBrandAndCategory(String categoryID, String brandID) {
         this.dispose();
     }//GEN-LAST:event_jButton7ActionPerformed
 
+    private void payReset(){
+       jTextField4.setText("");
+       jTextField5.setText("");
+       jTextField6.setText("");
+       jTextField7.setText("");
+       jLabel17.setText("");
+    }
+    
     private void jButton9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton9ActionPerformed
-        // TODO add your handling code here:
+        String ID = jTextField4.getText();
+        String p_date = jTextField5.getText();
+        String o_date = jTextField6.getText();
+        String qty = jTextField7.getText();
+        String amount = jLabel17.getText(); // Corrected the spelling from ammount to amount
+
+        try {
+            // Checking if any fields are empty
+            if(ID.isEmpty()){
+                JOptionPane.showMessageDialog(this, "ID is Not Set", "Warning", JOptionPane.ERROR_MESSAGE);
+            } else if(p_date.isEmpty()){
+                JOptionPane.showMessageDialog(this, "P-Date is Not Set", "Warning", JOptionPane.ERROR_MESSAGE);
+            } else if(o_date.isEmpty()){
+                JOptionPane.showMessageDialog(this, "O-Date is Not Set", "Warning", JOptionPane.ERROR_MESSAGE);
+            } else if(qty.isEmpty()){
+                JOptionPane.showMessageDialog(this, "Quantity is Not Set", "Warning", JOptionPane.ERROR_MESSAGE);
+            } else if(amount.isEmpty()){
+                JOptionPane.showMessageDialog(this, "Amount is Not Set", "Warning", JOptionPane.ERROR_MESSAGE);
+            } else {
+                // Check if the record already exists
+                ResultSet resultSet = MYSQL.execute("SELECT * FROM `payfor_areca` WHERE `id` = '"+ID+"'");
+
+                if(resultSet.next()) {
+                    // Record with this ID already exists
+                    JOptionPane.showMessageDialog(this, "Record with ID already exists!", "Warning", JOptionPane.ERROR_MESSAGE);
+                } else {
+                    // Insert a new record into the table
+                    MYSQL.execute("INSERT INTO `payfor_areca` (`id`, `p_date`, `o_date`, `totqty`, `ammount`) VALUES "
+                        + "('"+ID+"', '"+p_date+"', '"+o_date+"', '"+qty+"', '"+amount+"')");
+
+                    JOptionPane.showMessageDialog(this, "Successfully Added", "Done", JOptionPane.INFORMATION_MESSAGE);
+                    payReset();
+                    loadRecord3();
+                    generatepayID();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Insert Fail", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+
+        
     }//GEN-LAST:event_jButton9ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
@@ -1001,6 +1199,7 @@ if (ID.isEmpty()) {
                     reset();  // Reset the form
                     loadRecord();  // Reload records
                     generateID();  // Generate new ID
+                    loadRecord1(); //Reload records2
                 } else {
                     JOptionPane.showMessageDialog(this, "Record with this ID already exists.", "Duplicate Entry", JOptionPane.ERROR_MESSAGE);
                 }
@@ -1022,6 +1221,8 @@ if (ID.isEmpty()) {
     private void jTabbedPane1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTabbedPane1MouseClicked
         reset();
         generateID();
+        payReset();
+        generatepayID();
     }//GEN-LAST:event_jTabbedPane1MouseClicked
 
     private void jPanel2MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jPanel2MouseClicked
@@ -1069,6 +1270,118 @@ if (ID.isEmpty()) {
     }//GEN-LAST:event_jButton4ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        String selectedID = jTextField1.getText();
+        // Ensure valid category selection
+        if (jComboBox1.getItemCount() == 0) {
+            JOptionPane.showMessageDialog(this, "Category combo box is empty.", "Initialization Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        if (jComboBox1.getSelectedIndex() == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a valid category.", "Category Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        String ctg = (String) jComboBox1.getSelectedItem();  // Selected category
+        String selectedCategoryID = null;
+
+        // Extract category ID
+        String[] parts = ctg.split(" - ");
+        if (parts.length > 0) {
+            selectedCategoryID = parts[0];  // Extract category ID
+        }
+
+        // Get selected stock (betel nuts) from jComboBox3
+        if (jComboBox3.getItemCount() == 0) {
+            JOptionPane.showMessageDialog(this, "Stock combo box is empty.", "Initialization Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        if (jComboBox3.getSelectedIndex() == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a valid stock item.", "Stock Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        String stockData = (String) jComboBox3.getSelectedItem();
+        String selectedStockID = null;
+
+        // Extract the stock ID (for betel nuts)
+        parts = stockData.split(" - ");
+        if (parts.length > 0) {
+            selectedStockID = parts[0];  // Extract the stock ID
+        }
+
+        // Get quantity to clear
+        int qty = (Integer) jSpinner1.getValue();
+        String rank = (String) jComboBox2.getSelectedItem();  // Rank selection
+        String selectedRankID = null;
+        String date = LocalDate.now().toString();  // Get current date
+
+        // Ensure valid rank selection
+        if (jComboBox2.getItemCount() == 0) {
+            JOptionPane.showMessageDialog(this, "Rank combo box is empty.", "Initialization Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        if (jComboBox2.getSelectedIndex() == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a valid rank.", "Rank Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        if (!"Select".equals(rank)) {
+            parts = rank.split(" - ");
+            if (parts.length > 0) {
+                selectedRankID = parts[0];  // Extract rank ID
+            }
+        }
+
+        // Check for valid ID and quantity input
+        if (ID.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please refresh the page, ID is empty.", "Empty Warning", JOptionPane.WARNING_MESSAGE);
+        } else if (qty <= 0) {
+            JOptionPane.showMessageDialog(this, "Please add a valid quantity.", "Quantity Warning", JOptionPane.WARNING_MESSAGE);
+        } else {
+            
+             try {
+                // Check the current stock quantity
+                ResultSet rs = MYSQL.execute("SELECT qty FROM stock WHERE id = '" + selectedStockID + "'");
+                if (rs.next()) {
+                    int currentQty = rs.getInt("qty");
+
+                    // Check if record already exists in 'providing'
+                    ResultSet resultSet = MYSQL.execute("SELECT quantity FROM providing WHERE id = '" + selectedID + "'");
+                    if (resultSet.next()) {
+                        // Get the previously added quantity
+                        int previousQty = resultSet.getInt("quantity");
+
+                        // Restore the previously added quantity back to stock
+                        int restoredQty = currentQty + previousQty;
+
+                        // Calculate the new stock quantity after reducing the new amount
+                        int newQty = restoredQty - qty;
+
+                        if (newQty >= 0) {
+                            // Update the stock quantity to reflect the new changes
+                            MYSQL.execute("UPDATE stock SET qty = '" + newQty + "' WHERE id = '" + selectedStockID + "'");
+
+                            // Update the 'providing' record with the new quantity and other details
+                            MYSQL.execute("UPDATE providing SET quantity = '" + qty + "', date = '" + date + "', category_id = '" + selectedCategoryID + "', brand_id = '" + selectedRankID + "', stock_id = '" + selectedStockID + "' WHERE id = '" + selectedID + "'");
+
+                            JOptionPane.showMessageDialog(this, "Record updated successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+                            reset();  // Reset the form
+                            loadRecord();  // Reload records
+                            generateID();  // Generate new ID
+                            loadRecord1(); // Reload records2
+                        } else {
+                            // Insufficient stock after the reduction
+                            JOptionPane.showMessageDialog(this, "Insufficient stock to clear the requested amount.", "Stock Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(this, "No record found to update.", "Record Not Found", JOptionPane.ERROR_MESSAGE);
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(this, "No stock found for the selected product.", "Stock Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "An error occurred: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+
         
     }//GEN-LAST:event_jButton2ActionPerformed
 
@@ -1077,34 +1390,50 @@ if (ID.isEmpty()) {
     }//GEN-LAST:event_jTable2MouseClicked
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-        String StockID = jTextField1.getText();  // Assuming the value is a product ID, not a numeric stock ID
+        String selectedID = jTextField1.getText();
 
         try {
-            // Check if the record exists in `providing` by product_id
-            ResultSet resultSet = MYSQL.execute("SELECT * FROM `providing` WHERE stock_id = '" + StockID + "'");
+            // Fetch the record from 'providing' based on the selected ID
+            ResultSet resultSet = MYSQL.execute("SELECT * FROM `providing` WHERE id = '" + selectedID + "'");
 
-//            if (resultSet.next()) {
-//                // Update stock by product_id
-//                String updateQuery = "UPDATE stock SET qty = qty + " + qty + " WHERE product_id = '" + productID + "'";
-//                MYSQL.execute(updateQuery);  // Execute the update query
-//
-//                // Delete from `providing` by product_id
-//                String deleteQuery = "DELETE FROM `providing` WHERE product_id = '" + productID + "'";
-//                MYSQL.execute(deleteQuery);  // Execute the delete query
-//
-//                // Show a success message
-//                JOptionPane.showMessageDialog(this, "Stock updated and record deleted successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
-//            } else {
-//                // Notify user if the record was not found
-//                JOptionPane.showMessageDialog(this, "Record not found", "Warning", JOptionPane.WARNING_MESSAGE);
-//            }
+            if (resultSet.next()) {
+                // Get the stock_id and previously added quantity
+                String stockID = resultSet.getString("stock_id");
+                int previousQty = resultSet.getInt("quantity");
 
-            // Reload records after updating and deleting
-            loadRecord();
+                // Fetch the current stock quantity
+                ResultSet rs = MYSQL.execute("SELECT qty FROM stock WHERE id = '" + stockID + "'");
+                if (rs.next()) {
+                    int currentQty = rs.getInt("qty");
 
+                    // Restore the previously added quantity back to stock
+                    int restoredQty = currentQty + previousQty;
+
+                    // Check if the restored quantity is valid
+                    if (restoredQty >= 0) {
+                        // Update the stock quantity to reflect the restored amount
+                        MYSQL.execute("UPDATE stock SET qty = '" + restoredQty + "' WHERE id = '" + stockID + "'");
+
+                        // Delete the record from 'providing'
+                        MYSQL.execute("DELETE FROM providing WHERE id = '" + selectedID + "'");
+
+                        JOptionPane.showMessageDialog(this, "Record deleted successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+                        reset();  // Reset the form
+                        loadRecord();  // Reload records
+                        generateID();  // Generate new ID
+                        loadRecord1(); // Reload records2
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Restored quantity is invalid.", "Stock Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(this, "No stock found for the selected stock ID.", "Stock Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "No record found in providing for the selected ID.", "Record Not Found", JOptionPane.ERROR_MESSAGE);
+            }
         } catch (Exception e) {
-            // Handle any errors
             e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "An error occurred: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
 
     }//GEN-LAST:event_jButton3ActionPerformed
@@ -1112,6 +1441,53 @@ if (ID.isEmpty()) {
     private void jTable1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTable1MouseClicked
         getSelectedRowData1();
     }//GEN-LAST:event_jTable1MouseClicked
+
+    private void jButton10ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton10ActionPerformed
+        payAmmount();
+    }//GEN-LAST:event_jButton10ActionPerformed
+
+    private void jButton8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton8ActionPerformed
+        String ID = jTextField4.getText();
+String p_date = jTextField5.getText();
+String o_date = jTextField6.getText();
+String qty = jTextField7.getText();
+String amount = jLabel17.getText();
+
+try {
+    ResultSet resultSet = MYSQL.execute("SELECT * FROM `payfor_areca` WHERE `id` = '"+ID+"'");
+
+    if (resultSet.next()) {
+        // Correct DELETE SQL query
+        MYSQL.execute("DELETE FROM `payfor_areca` WHERE id = '"+ID+"'");
+
+        JOptionPane.showMessageDialog(this, "Record Deleted Successfully", "Done", JOptionPane.INFORMATION_MESSAGE);
+        
+        // Reset form fields, reload records, and regenerate pay ID
+        payReset();
+        loadRecord3();
+        generatepayID();
+    } else {
+        JOptionPane.showMessageDialog(this, "No record found with ID: " + ID, "Warning", JOptionPane.WARNING_MESSAGE);
+    }
+
+} catch (Exception e) {
+    e.printStackTrace();
+    JOptionPane.showMessageDialog(this, "Delete Operation Failed", "Error", JOptionPane.ERROR_MESSAGE);
+}
+
+    }//GEN-LAST:event_jButton8ActionPerformed
+
+    private void jTable3AncestorAdded(javax.swing.event.AncestorEvent evt) {//GEN-FIRST:event_jTable3AncestorAdded
+        
+    }//GEN-LAST:event_jTable3AncestorAdded
+
+    private void jTable3MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTable3MouseClicked
+        getSelectedRowData2();
+    }//GEN-LAST:event_jTable3MouseClicked
+
+    private void formMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseClicked
+        // TODO add your handling code here:
+    }//GEN-LAST:event_formMouseClicked
 
     /**
      * @param args the command line arguments
@@ -1131,14 +1507,13 @@ if (ID.isEmpty()) {
     public javax.swing.JButton jButton2;
     public javax.swing.JButton jButton3;
     public javax.swing.JButton jButton4;
+    public javax.swing.JButton jButton5;
     public javax.swing.JButton jButton7;
     public javax.swing.JButton jButton8;
     public javax.swing.JButton jButton9;
     public javax.swing.JComboBox<String> jComboBox1;
     public javax.swing.JComboBox<String> jComboBox2;
     public javax.swing.JComboBox<String> jComboBox3;
-    public com.toedter.calendar.JDateChooser jDateChooser1;
-    public com.toedter.calendar.JDateChooser jDateChooser2;
     public javax.swing.JLabel jLabel1;
     public javax.swing.JLabel jLabel10;
     public javax.swing.JLabel jLabel11;
@@ -1146,9 +1521,9 @@ if (ID.isEmpty()) {
     public javax.swing.JLabel jLabel13;
     public javax.swing.JLabel jLabel14;
     public javax.swing.JLabel jLabel15;
-    public javax.swing.JLabel jLabel16;
     public javax.swing.JLabel jLabel17;
     public javax.swing.JLabel jLabel18;
+    public javax.swing.JLabel jLabel19;
     public javax.swing.JLabel jLabel2;
     public javax.swing.JLabel jLabel3;
     public javax.swing.JLabel jLabel4;
@@ -1174,7 +1549,6 @@ if (ID.isEmpty()) {
     public javax.swing.JScrollPane jScrollPane3;
     public javax.swing.JSpinner jSpinner1;
     public javax.swing.JSpinner jSpinner2;
-    public javax.swing.JSpinner jSpinner3;
     public javax.swing.JTabbedPane jTabbedPane1;
     public javax.swing.JTable jTable1;
     public javax.swing.JTable jTable2;
@@ -1183,5 +1557,8 @@ if (ID.isEmpty()) {
     public javax.swing.JTextField jTextField2;
     public javax.swing.JTextField jTextField3;
     public javax.swing.JTextField jTextField4;
+    public javax.swing.JTextField jTextField5;
+    public javax.swing.JTextField jTextField6;
+    public javax.swing.JTextField jTextField7;
     // End of variables declaration//GEN-END:variables
 }
