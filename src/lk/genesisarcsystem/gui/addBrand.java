@@ -2,24 +2,57 @@ package lk.genesisarcsystem.gui;
 
 import com.formdev.flatlaf.FlatDarkLaf;
 import java.sql.ResultSet;
+import java.util.HashMap;
 import java.util.Vector;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import lk.genesisarcsystem.connection.MYSQL;
 
-public class addRank extends javax.swing.JFrame {
+public class addBrand extends javax.swing.JFrame {
 
-    public addRank() {
+    public addBrand() {
         initComponents();
-        loadRank();
+        loadBrand();
+        loadCategory();
         //this.setExtendedState(JFrame.MAXIMIZED_BOTH);
     }
 
-    private void loadRank() {
+    private HashMap<String, String> categoryMap = new HashMap<>();
+
+    private void loadCategory() {
 
         try {
 
-            ResultSet resultSet = MYSQL.execute("SELECT * FROM `rank`");
+            ResultSet resultSet = MYSQL.execute("SELECT * FROM `category` ORDER BY `id` ASC");
+
+            Vector v = new Vector();
+            v.add("Select");
+
+            while (resultSet.next()) {
+                v.add(resultSet.getString("name"));
+                categoryMap.put(resultSet.getString("name"), resultSet.getString("id"));
+            }
+
+            DefaultComboBoxModel model = (DefaultComboBoxModel) jComboBox1.getModel();
+            model.removeAllElements();
+
+            model.addAll(v);
+            jComboBox1.setSelectedIndex(0);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    private void loadBrand() {
+
+        try {
+
+            ResultSet resultSet = MYSQL.execute("SELECT * FROM `brand`"
+                    + "INNER JOIN `category` ON `brand`.`category_id` = `category`.`id`"
+                    + "ORDER BY `brand`.`id` ASC");
 
             DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
             model.setRowCount(0);
@@ -28,6 +61,7 @@ public class addRank extends javax.swing.JFrame {
 
                 Vector<String> vector = new Vector<>();
                 vector.add(resultSet.getString("id"));
+                vector.add(resultSet.getString("category.name"));
                 vector.add(resultSet.getString("name"));
                 model.addRow(vector);
 
@@ -42,7 +76,7 @@ public class addRank extends javax.swing.JFrame {
     private void reset() {
         jTextField1.setText("");
         jTextField1.grabFocus();
-
+        jComboBox1.setSelectedIndex(0);
         jTable1.clearSelection();
 
         jButton5.setEnabled(true);
@@ -61,6 +95,8 @@ public class addRank extends javax.swing.JFrame {
         jButton4 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
         jButton5 = new javax.swing.JButton();
+        jLabel4 = new javax.swing.JLabel();
+        jComboBox1 = new javax.swing.JComboBox<>();
         jPanel4 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
@@ -79,10 +115,13 @@ public class addRank extends javax.swing.JFrame {
         jPanel5.setBackground(new java.awt.Color(102, 102, 102));
 
         jLabel2.setFont(new java.awt.Font("Serif", 0, 24)); // NOI18N
-        jLabel2.setText("Add New Rank");
+        jLabel2.setText("Add New Brand");
 
         jLabel3.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        jLabel3.setText("Enter Rank:");
+        jLabel3.setText("Select Category:");
+
+        jTextField1.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        jTextField1.setForeground(new java.awt.Color(255, 255, 255));
 
         jButton4.setBackground(new java.awt.Color(255, 51, 51));
         jButton4.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
@@ -114,6 +153,13 @@ public class addRank extends javax.swing.JFrame {
             }
         });
 
+        jLabel4.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        jLabel4.setText("Enter Brand:");
+
+        jComboBox1.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        jComboBox1.setForeground(new java.awt.Color(255, 255, 255));
+        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
@@ -121,13 +167,14 @@ public class addRank extends javax.swing.JFrame {
             .addGroup(jPanel5Layout.createSequentialGroup()
                 .addGap(24, 24, 24)
                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 136, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jButton5, javax.swing.GroupLayout.DEFAULT_SIZE, 212, Short.MAX_VALUE)
-                    .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(jLabel2)
-                        .addComponent(jTextField1, javax.swing.GroupLayout.DEFAULT_SIZE, 212, Short.MAX_VALUE)
-                        .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 136, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jButton4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addComponent(jLabel2)
+                    .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 136, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jButton4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jComboBox1, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jTextField1))
                 .addContainerGap(41, Short.MAX_VALUE))
         );
         jPanel5Layout.setVerticalGroup(
@@ -138,14 +185,18 @@ public class addRank extends javax.swing.JFrame {
                 .addGap(35, 35, 35)
                 .addComponent(jLabel3)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(12, 12, 12)
+                .addComponent(jLabel4)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(24, 24, 24)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jButton5, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButton4, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(71, 71, 71))
         );
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
@@ -171,17 +222,17 @@ public class addRank extends javax.swing.JFrame {
         jTable1.setForeground(new java.awt.Color(255, 255, 255));
         jTable1.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null},
-                {null, null},
-                {null, null},
-                {null, null}
+                {null, null, null},
+                {null, null, null},
+                {null, null, null},
+                {null, null, null}
             },
             new String [] {
-                "ID", "Rank"
+                "ID", "Category", "Brand"
             }
         ) {
             boolean[] canEdit = new boolean [] {
-                false, false
+                false, false, false
             };
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
@@ -298,30 +349,30 @@ public class addRank extends javax.swing.JFrame {
 
         } else {
 
-            String rank = jTextField1.getText();
+            String brandText = jTextField1.getText();
 
             int row = jTable1.getSelectedRow();
             String id = String.valueOf(jTable1.getValueAt(row, 0));
+            
+            String selectedBrand = String.valueOf(jTable1.getValueAt(row, 2));
 
-            String selectedRank = String.valueOf(jTable1.getValueAt(row, 1));
-
-            if (rank.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Please enter rank", "Warning", JOptionPane.WARNING_MESSAGE);
-            } else if (rank.equals(selectedRank)) {
-                JOptionPane.showMessageDialog(this, "Please change rank name", "Warning", JOptionPane.WARNING_MESSAGE);
+            if (brandText.isBlank()) {
+                JOptionPane.showMessageDialog(this, "Please enter Brand", "Warning", JOptionPane.WARNING_MESSAGE);
+            } else if (brandText.equals(selectedBrand)) {
+                JOptionPane.showMessageDialog(this, "Please change brand name", "Warning", JOptionPane.WARNING_MESSAGE);
 
             } else {
 
                 try {
 
-                    ResultSet resultSet = MYSQL.execute("SELECT * FROM `rank` WHERE (`name`='" + rank + "') AND `id`!='" + id + "'");
+                    ResultSet resultSet = MYSQL.execute("SELECT * FROM `brand` WHERE (`name`='" + brandText + "') AND `id`!='" + id + "'");
 
                     if (resultSet.next()) {
-                        JOptionPane.showMessageDialog(this, "Rank alredy added", "Warning", JOptionPane.WARNING_MESSAGE);
+                        JOptionPane.showMessageDialog(this, "Brand alredy added", "Warning", JOptionPane.WARNING_MESSAGE);
                     } else {
-                        MYSQL.execute("UPDATE `rank` SET `name`='" + rank + "' WHERE  `id`='" + id + "'");
-
-                        loadRank();
+                        MYSQL.execute("UPDATE `brand` SET `name`='" + brandText + "' WHERE  `id`='" + id + "'");
+                        JOptionPane.showMessageDialog(this, "Successfully Updated","Success", JOptionPane.INFORMATION_MESSAGE);
+                        loadBrand();
                         reset();
                     }
 
@@ -334,22 +385,27 @@ public class addRank extends javax.swing.JFrame {
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
         // TODO add your handling code here:
-        String rank = jTextField1.getText();
 
-        if (rank.isBlank()) {
+        String selectedCategory = jComboBox1.getSelectedItem().toString();
+        String brandText = jTextField1.getText();
+
+        if (selectedCategory.equals("Select")) {
+            JOptionPane.showMessageDialog(this, "Please select a category", "Warning", JOptionPane.WARNING_MESSAGE);
+        } else if (brandText.isBlank()) {
             JOptionPane.showMessageDialog(this, "Please enter category name", "Warning", JOptionPane.WARNING_MESSAGE);
         } else {
 
             try {
 
-                ResultSet resultSet = MYSQL.execute("SELECT * FROM `rank` WHERE `name`='" + rank + "'");
+                ResultSet resultSet = MYSQL.execute("SELECT * FROM `brand` WHERE `name`='" + brandText + "'");
 
                 if (resultSet.next()) {
-                    JOptionPane.showMessageDialog(this, "Rank alredy added", "Warning", JOptionPane.WARNING_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Brand alredy added", "Warning", JOptionPane.WARNING_MESSAGE);
                 } else {
-                    MYSQL.execute("INSERT INTO `rank`(`name`) VALUES('" + rank + "')");
+                    String categoryId = categoryMap.get(selectedCategory);
+                    MYSQL.execute("INSERT INTO `brand`(`name`,category_id) VALUES('" + brandText + "', '" + categoryId + "')");
 
-                    loadRank();
+                    loadBrand();
                     reset();
                 }
 
@@ -363,12 +419,14 @@ public class addRank extends javax.swing.JFrame {
     private void jTable1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTable1MouseClicked
         // TODO add your handling code here:
         int row = jTable1.getSelectedRow();
-
-        jTextField1.setText(String.valueOf(jTable1.getValueAt(row, 1)));
-
-        jButton5.setEnabled(false);
-
         if (evt.getClickCount() == 2) {
+            // Get Category Name and set it in jComboBox1
+            String categoryName = jTable1.getValueAt(row, 1).toString();
+            jComboBox1.setSelectedItem(categoryName);
+
+            jTextField1.setText(String.valueOf(jTable1.getValueAt(row, 2)));
+
+            jButton5.setEnabled(false);
 
 //            String name = String.valueOf(jTable1.getValueAt(row, 1));
 //            sr.setCompanyName(name);
@@ -389,7 +447,7 @@ public class addRank extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new addRank().setVisible(true);
+                new addBrand().setVisible(true);
             }
         });
     }
@@ -399,8 +457,10 @@ public class addRank extends javax.swing.JFrame {
     private javax.swing.JButton jButton3;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
+    private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;

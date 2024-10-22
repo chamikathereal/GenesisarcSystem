@@ -7,10 +7,11 @@ public class GRNItem {
     private String productId;
     private String productName;
     private String categoryName;
-    private String rankName;
+    private String brandName;
     private double qty;
     private double buyingPrice;
     private double sellingPrice;
+    private double shopPrice;
     private Date mfg;
     private Date exp;
 
@@ -21,7 +22,7 @@ public class GRNItem {
     public void setProductId(String productId) {
         this.productId = productId;
     }
-    
+
     public String getProductName() {
         return productName;
     }
@@ -38,13 +39,14 @@ public class GRNItem {
         this.categoryName = categoryName;
     }
 
-    public String getRankName() {
-        return rankName;
+    public String getBrandName() {
+        return brandName;
     }
 
-    public void setRankName(String rankName) {
-        this.rankName = rankName;
+    public void setBrandName(String brandName) {
+        this.brandName = brandName;
     }
+
     public double getQty() {
         return qty;
     }
@@ -69,6 +71,14 @@ public class GRNItem {
         this.sellingPrice = sellingPrice;
     }
 
+    public double getShopPrice() {
+        return shopPrice;
+    }
+
+    public void setShopPrice(double shopPrice) {
+        this.shopPrice = shopPrice;
+    }
+
     public Date getMfg() {
         return mfg;
     }
@@ -85,6 +95,6 @@ public class GRNItem {
         this.exp = exp;
     }
 
-    
+   
 
 }
