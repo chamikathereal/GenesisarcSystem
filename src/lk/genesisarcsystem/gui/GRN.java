@@ -14,8 +14,7 @@ import javax.swing.table.DefaultTableModel;
 import lk.genesisarcsystem.model.GRNItem;
 
 public class GRN extends javax.swing.JFrame {
-//this is a hashmap
-    //dev by chamika
+
     //this is my project
 
     HashMap<String, GRNItem> grnItemMap = new HashMap<>();
