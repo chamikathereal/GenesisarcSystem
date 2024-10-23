@@ -11,7 +11,7 @@ import javax.swing.table.DefaultTableModel;
 import lk.genesisarcsystem.connection.MYSQL;
 
 public class addProduct extends javax.swing.JFrame {
-
+    //GRN
     private GRN grn;
 
     public void setGrn(GRN grn) {
